@@ -1,0 +1,18 @@
+Label,Series Description
+A,Axial T2w (ssfse)
+B,Axial Precontrast Fat Suppressed T1w (dynpre)
+C,Mid Arterial T1w
+D,MRCP
+E,Axial Late Dynamic T1w
+F,Anything else
+G,Axial In Phase (t1nfs)
+H,Axial Opposed Phase (opposed)
+I,Axial DWI
+J,Coronal T2w
+K,Portal Venous T1w (dynportal)
+L,Localizers
+M,Axial ADC
+N,Coronal Late Dynamic T1w
+O,Early Arterial T1w
+P,Axial Transitional/Hepatocyte T1w
+Q,Late Arterial T1w
