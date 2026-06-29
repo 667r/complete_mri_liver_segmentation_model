@@ -2,8 +2,8 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-export nnUNet_raw="${nnUNet_raw:-$REPO_ROOT/data/nnUNet_raw}"
-export nnUNet_preprocessed="${nnUNet_preprocessed:-$REPO_ROOT/data/nnUNet_preprocessed}"
+export nnUNet_raw="${nnUNet_raw:-$REPO_ROOT/nnUNet_raw}"
+export nnUNet_preprocessed="${nnUNet_preprocessed:-$REPO_ROOT/nnUNet_preprocessed}"
 export nnUNet_results="${nnUNet_results:-$REPO_ROOT/models/nnUNet_results_seg_8}"
 
 DATASET_ID="${DATASET_ID:-2}"

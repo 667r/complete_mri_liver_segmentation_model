@@ -15,9 +15,9 @@ module load conda
 source "$(conda info --base)/etc/profile.d/conda.sh"
 conda activate "${CONDA_ENV:-mariano}"
 
-BASE="${BASE:-/mnt/researchers/julio-sotelo/datasets/mvarasr}"
 PROJECT_DIR="${PROJECT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
-VOLUMETRY_SCRIPT="${VOLUMETRY_SCRIPT:-/home/mvarasr/get_volumetry_mL.py}"
+BASE="${BASE:-$PROJECT_DIR}"
+VOLUMETRY_SCRIPT="${VOLUMETRY_SCRIPT:-$PROJECT_DIR/src/get_volumetry_mL.py}"
 NNUNET_RAW="${NNUNET_RAW:-$BASE/nnUNet_raw}"
 OUTPUT_DIR="${VOLUMETRY_OUTPUT_DIR:-/mnt/workspace/$USER/volumetry_outputs/$(date +%Y%m%d_%H%M%S)}"
 PREDICTIONS_DIR_NAME="${PREDICTIONS_DIR_NAME:-predictions}"

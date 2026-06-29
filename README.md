@@ -98,8 +98,8 @@ pip install -e .
 nnU-Net v2 requires three environment variables:
 
 ```bash
-export nnUNet_raw="$PWD/data/nnUNet_raw"
-export nnUNet_preprocessed="$PWD/data/nnUNet_preprocessed"
+export nnUNet_raw="$PWD/nnUNet_raw"
+export nnUNet_preprocessed="$PWD/nnUNet_preprocessed"
 export nnUNet_results="$PWD/models/nnUNet_results_seg"
 ```
 
@@ -112,8 +112,8 @@ export nnUNet_results="$PWD/models/nnUNet_results_seg_8"
 On Windows PowerShell:
 
 ```powershell
-$Env:nnUNet_raw = "$PWD/data/nnUNet_raw"
-$Env:nnUNet_preprocessed = "$PWD/data/nnUNet_preprocessed"
+$Env:nnUNet_raw = "$PWD/nnUNet_raw"
+$Env:nnUNet_preprocessed = "$PWD/nnUNet_preprocessed"
 $Env:nnUNet_results = "$PWD/models/nnUNet_results_seg"
 ```
 
@@ -122,7 +122,7 @@ $Env:nnUNet_results = "$PWD/models/nnUNet_results_seg"
 nnU-Net expects each dataset in `nnUNet_raw` to use the standard v2 format:
 
 ```text
-data/nnUNet_raw/
+nnUNet_raw/
 └── Dataset001_Liver/
     ├── dataset.json
     ├── imagesTr/
@@ -133,13 +133,13 @@ data/nnUNet_raw/
 Whole-liver segmentation should use:
 
 ```text
-data/nnUNet_raw/Dataset001_Liver/
+nnUNet_raw/Dataset001_Liver/
 ```
 
 Couinaud segmentation should use:
 
 ```text
-data/nnUNet_raw/Dataset002_LiverSegments/
+nnUNet_raw/Dataset002_LiverSegments/
 ```
 
 Labels should preserve image spacing and orientation. Use nearest-neighbor interpolation for masks and image interpolation appropriate for MRI volumes during any conversion or resampling.
@@ -150,7 +150,7 @@ The Duke Liver Dataset is a public MRI dataset with liver segmentation masks and
 
 - <https://zenodo.org/records/7774566>
 
-This repository includes `data/SegmentationKey.csv` and `data/SequenceTypes.csv` to help identify the relevant image series. The dataset itself is not redistributed here. After obtaining access and downloading the data, convert the selected DICOM series and masks into nnU-Net-compatible NIfTI files under `data/nnUNet_raw/Dataset001_Liver/`.
+This repository includes `data/SegmentationKey.csv` and `data/SequenceTypes.csv` to help identify the relevant image series. The dataset itself is not redistributed here. After obtaining access and downloading the data, convert the selected DICOM series and masks into nnU-Net-compatible NIfTI files under `nnUNet_raw/Dataset001_Liver/`.
 
 ## Private Couinaud Dataset
 
@@ -159,7 +159,7 @@ The private Couinaud dataset contains segment-level liver annotations and cannot
 Prepare it as:
 
 ```text
-data/nnUNet_raw/Dataset002_LiverSegments/
+nnUNet_raw/Dataset002_LiverSegments/
 ├── dataset.json
 ├── imagesTr/
 ├── labelsTr/
@@ -219,7 +219,7 @@ Run nnU-Net evaluation for a prediction folder and reference labels:
 ```bash
 bash scripts/evaluate.sh \
   results/predictions/whole_liver \
-  data/nnUNet_raw/Dataset001_Liver/labelsTs \
+  nnUNet_raw/Dataset001_Liver/labelsTs \
   results/evaluation/whole_liver \
   models/nnUNet_results_seg/Dataset001_Liver/nnUNetTrainer__nnUNetPlans__3d_fullres/dataset.json \
   models/nnUNet_results_seg/Dataset001_Liver/nnUNetTrainer__nnUNetPlans__3d_fullres/plans.json

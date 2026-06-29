@@ -7,13 +7,13 @@ dataset folder under `nnUNet_raw`.
 
 ```bash
 ssh <user>@ih-condor
-cd /mnt/researchers/julio-sotelo/datasets/mvarasr
+cd /path/to/complete_mri_liver_segmentation_model
 ```
 
-The Slurm wrapper calls the volumetry script at:
+The Slurm wrapper calls the volumetry script inside the project:
 
 ```text
-/home/mvarasr/get_volumetry_mL.py
+src/get_volumetry_mL.py
 ```
 
 That file must be the argument-based version that accepts `--nnunet-raw`,
@@ -57,7 +57,7 @@ CONDA_ENV=mariano sbatch scripts/run_volumetry_condor.sh
 Use a different dataset base:
 
 ```bash
-BASE=/mnt/researchers/julio-sotelo/datasets/mvarasr sbatch scripts/run_volumetry_condor.sh
+BASE=/path/to/dataset/base sbatch scripts/run_volumetry_condor.sh
 ```
 
 Use a different project path:
@@ -69,7 +69,7 @@ PROJECT_DIR=/path/to/complete_mri_liver_segmentation_model sbatch scripts/run_vo
 Use a different volumetry script path:
 
 ```bash
-VOLUMETRY_SCRIPT=/home/mvarasr/get_volumetry_mL.py sbatch scripts/run_volumetry_condor.sh
+VOLUMETRY_SCRIPT=/path/to/get_volumetry_mL.py sbatch scripts/run_volumetry_condor.sh
 ```
 
 Run only specific datasets:
