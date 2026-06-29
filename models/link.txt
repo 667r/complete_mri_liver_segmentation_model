@@ -1,0 +1,5 @@
+Link to download the nnUNet models that create the predictions.
+For complete Segmentation, download "nnUNet_results_seg"
+For Couinaud Segmentation, download "nnUNet_results_seg_8"
+
+https://drive.google.com/drive/folders/1iygn1OOBxoEanUiUc0stLdmIP1HmAvNX?usp=sharing

@@ -1,0 +1,13 @@
+nnunetv2
+torch
+numpy
+pandas
+scipy
+nibabel
+SimpleITK
+medpy
+scikit-image
+matplotlib
+seaborn
+tqdm
+pyyaml
