@@ -4,40 +4,81 @@
 
 El manuscrito `Contrast-Agnostic Deep Learning for Whole Liver and Couinaud Segment Segmentation in Magnetic Resonance Imaging` no reporta resultados experimentales definitivos. Es una propuesta metodologica: define datos candidatos, preprocesamiento, arquitectura, entrenamiento, evaluacion y cinco experimentos planificados. Por lo tanto, la replica debe tratarse como implementacion y validacion del protocolo, no como reproduccion numerica de tablas ya publicadas.
 
+Este repositorio contiene la estructura local a utilizar. La cohorte principal esta en `data/Segmentation/Segmentation` como volumenes DICOM, y cada volumen tiene una mascara DICOM de higado completo en su carpeta `masks`. Los contrastes disponibles se definen cruzando `data/SegmentationKey.csv` con `data/SequenceTypes.csv`.
+
+El subconjunto `data/8 segmentos` no debe tratarse como cobertura completa del dataset: contiene mascaras NIfTI de segmentos Couinaud solo para algunos pacientes y solo para algunos contrastes.
+
 ## Objetivo replicable
 
 Construir una pipeline supervisada 3D para:
 
 1. Segmentacion binaria de higado completo.
-2. Segmentacion multic clase de segmentos Couinaud I-VIII.
-3. Evaluacion de robustez ante distintos contrastes MRI.
-4. Comparacion de variantes con informacion anatomica auxiliar, si existen vasos o landmarks.
-5. Calculo de volumetria global y por segmento.
+2. Evaluacion de robustez ante los contrastes MRI realmente presentes en el dataset local.
+3. Preparacion opcional de un dataset multic clase de segmentos Couinaud I-VIII con el subconjunto NIfTI disponible.
+4. Calculo de volumetria global y, solo cuando exista mascara Couinaud, volumetria por segmento.
 
 ## Datos requeridos
 
 ### Imagenes
 
-Volumenes abdominales MRI en NIfTI, DICOM convertido a NIfTI, o formato equivalente soportado por la pipeline actual. Contrastes esperados:
+Volumenes abdominales MRI en DICOM bajo:
 
-- T1 pre-contraste.
-- T1 post-contraste.
-- T2.
-- Dixon water/fat.
-- In-phase y opposed-phase.
-- Fase portal venosa, si existe.
+```text
+data/Segmentation/Segmentation/{paciente}/{serie}/images/*.dicom
+```
+
+Para entrenamiento con nnU-Net, estos DICOM deben convertirse a NIfTI en la estructura `imagesTr` con la convencion `{case_id}_0000.nii.gz`.
+
+### Contrastes actuales
+
+La referencia canonica de contraste es:
+
+1. `data/SegmentationKey.csv`: mapea `DLDS, Series` a una etiqueta corta.
+2. `data/SequenceTypes.csv`: mapea esa etiqueta corta al nombre del contraste.
+
+Contrastes presentes con imagen DICOM y mascara DICOM de higado completo:
+
+```text
+Label,Series Description,volumenes
+B,Axial Precontrast Fat Suppressed T1w (dynpre),85
+C,Mid Arterial T1w,3
+E,Axial Late Dynamic T1w,2
+G,Axial In Phase (t1nfs),82
+H,Axial Opposed Phase (opposed),54
+K,Portal Venous T1w (dynportal),83
+O,Early Arterial T1w,1
+```
+
+En total: 310 volumenes DICOM de 95 pacientes, todos con carpeta `images` y `masks`.
 
 ### Etiquetas
 
 Minimo:
 
-- Mascara binaria de higado completo.
+- Mascara binaria de higado completo en DICOM:
 
-Ideal:
+```text
+data/Segmentation/Segmentation/{paciente}/{serie}/masks/*.dicom
+```
 
-- Etiqueta multic clase con fondo + Couinaud I-VIII.
+Subconjunto disponible:
 
-Opcional para extensiones:
+- Mascaras NIfTI de segmentos Couinaud I-VIII en `data/8 segmentos`.
+- Cobertura parcial: 197 mascaras NIfTI, 73 pacientes.
+- Contrastes con mascara Couinaud parcial:
+
+```text
+Label,Series Description,mascaras Couinaud
+B,Axial Precontrast Fat Suppressed T1w (dynpre),56
+C,Mid Arterial T1w,3
+E,Axial Late Dynamic T1w,2
+G,Axial In Phase (t1nfs),50
+H,Axial Opposed Phase (opposed),26
+K,Portal Venous T1w (dynportal),59
+O,Early Arterial T1w,1
+```
+
+Opcional para extensiones si aparece en datos externos:
 
 - Mascaras vasculares.
 - Landmarks anatomicos.
@@ -50,32 +91,27 @@ Cada caso deberia exponerse a la pipeline con una estructura conceptual similar 
 
 ```text
 case_id
-image_path
-liver_mask_path
+patient_id
+series_id
+image_dicom_dir
+liver_mask_dicom_dir
 couinaud_mask_path
-contrast
-institution
-scanner_vendor
-field_strength
-pathology_group
+contrast_label
+contrast_name
 spacing
 split
 ```
 
-Si la pipeline del repositorio ya usa un manifiesto CSV/JSON/YAML, conviene extender ese manifiesto con los campos `contrast`, `institution`, `scanner_vendor`, `field_strength` y `pathology_group`. Estos campos son necesarios para reproducir la evaluacion estratificada del paper.
+Para nnU-Net v2, cada volumen debe quedar como un caso independiente de un solo canal MRI:
 
-## Preprocesamiento
+```text
+nnUNet_raw/Dataset001_Liver/
+dataset.json
+imagesTr/{case_id}_0000.nii.gz
+labelsTr/{case_id}.nii.gz
+```
 
-Pasos alineados con el manuscrito:
-
-1. Convertir todos los volumenes a una orientacion comun.
-2. Preservar metadatos fisicos de spacing para calculo volumetrico.
-3. Re-muestrear a spacing isotropico o casi isotropico definido por la mediana del dataset.
-4. Aplicar clipping robusto por percentiles.
-5. Normalizar intensidad por volumen o por crop corporal/hepatico.
-6. Aplicar crop abdominal o crop centrado en higado.
-7. Opcional: N4 bias field correction, validando que no degrade contraste clinico.
-8. Guardar imagenes y mascaras preprocesadas con trazabilidad al caso original.
+Los campos `patient_id`, `series_id`, `contrast_label` y `contrast_name` deben conservarse en un manifiesto externo para analisis estratificado. El mismo paciente no debe dividirse entre train, validacion y test aunque tenga varios contrastes.
 
 Para labels, usar interpolacion nearest-neighbor. Para imagenes, usar interpolacion lineal o B-spline segun la convencion de la pipeline.
 
@@ -83,21 +119,16 @@ Para labels, usar interpolacion nearest-neighbor. Para imagenes, usar interpolac
 
 Aumentos sugeridos:
 
-- Rotaciones y escalado.
-- Deformacion elastica.
-- Perturbaciones gamma/intensidad.
-- Ruido Gaussiano.
-- Blur.
-- Bias field simulado.
-- Dropout de contraste si hay entradas multicanal.
+- Rotaciones 3D leves.
+- Escalado isotropico leve.
 
-El objetivo es representar variabilidad MRI plausible, no destruir anatomia.
+Aplicar la misma transformacion espacial a imagen y label. Para labels usar interpolacion nearest-neighbor; para imagenes usar interpolacion lineal. No usar aumentos de intensidad como parte del protocolo minimo salvo que se definan como experimento adicional, porque el objetivo actual es aislar la variabilidad geometrica propuesta.
 
 ## Experimento 1: segmentacion de higado completo
 
 ### Hipotesis
 
-Un modelo 3D entrenado con datos heterogeneos logra segmentacion robusta de higado completo a traves de multiples contrastes.
+Un modelo 3D entrenado con los volumenes DICOM locales logra segmentacion robusta de higado completo a traves de los contrastes B, C, E, G, H, K y O.
 
 ### Modelo
 
@@ -119,9 +150,6 @@ Reportar:
 
 - DSC.
 - IoU.
-- HD95.
-- ASSD.
-- Volumetric similarity.
 - Precision.
 - Recall.
 - Error absoluto y relativo de volumen.
@@ -129,23 +157,23 @@ Reportar:
 Estratificar por:
 
 - Contraste.
-- Vendor.
-- Institucion.
-- Campo magnetico.
-- Patologia.
+- Paciente.
+- Campo magnetico solo si se extrae de metadatos DICOM y queda disponible en el manifiesto.
 
 ## Experimento 2: segmentacion Couinaud I-VIII
 
 ### Hipotesis
 
-La segmentacion Couinaud es mas dificil que la segmentacion de higado completo, especialmente para segmentos pequenos o variables como I y IV.
+La segmentacion Couinaud es mas dificil que la segmentacion de higado completo, especialmente para segmentos pequenos o variables como I y IV. En este repositorio, este experimento debe tratarse como secundario porque las mascaras Couinaud existen solo para un subconjunto de pacientes y contrastes.
 
 ### Estrategias
 
-Comparar:
+Estrategia local recomendada:
 
-1. Modelo unificado: una red predice fondo + segmentos I-VIII.
-2. Modelo en dos etapas: primera red predice higado, segunda red segmenta Couinaud dentro del higado.
+1. Preparar un Dataset002_LiverSegments solo con pares imagen DICOM + mascara Couinaud NIfTI existentes.
+2. Mantener split por paciente, no por volumen.
+3. Evaluar por contraste, pero reportar claramente la cobertura parcial.
+4. Dejar el modelo en dos etapas como extension futura si la mascara de higado completo se usa para recortar o restringir la prediccion Couinaud.
 
 ### Salida
 
@@ -169,37 +197,8 @@ Reportar por segmento, no solo promedio:
 
 - DSC.
 - IoU.
-- HD95.
-- ASSD.
 - Error relativo de volumen.
 - Volumen en ml.
-
-## Experimento 3: generalizacion por contraste
-
-### Disenos
-
-1. Pooled training: entrenar con todos los contrastes disponibles.
-2. Leave-one-contrast-out: excluir un contraste durante entrenamiento y probar en ese contraste.
-3. Cross-contrast: entrenar en un contraste y probar en otro.
-
-### Comparaciones clave
-
-Medir si el entrenamiento agrupado mejora la robustez o si ciertos contrastes dominan el aprendizaje. La particion debe ser a nivel paciente, no a nivel volumen, para evitar fuga de datos.
-
-## Experimento 4: extensiones anatomicas
-
-Ejecutar solo si los datos lo permiten.
-
-### Variantes
-
-1. Baseline sin informacion auxiliar.
-2. Modelo con rama auxiliar de vasos.
-3. Modelo con deteccion de landmarks.
-4. Modelo con canal de coordenadas normalizadas dentro del higado.
-
-### Criterio de exito
-
-La extension anatomica deberia mejorar bordes intersegmentarios, HD95/ASSD y errores de volumen por segmento, especialmente cerca de planos vasculares.
 
 ## Experimento 5: volumetria clinica
 
@@ -227,14 +226,16 @@ Reportar:
 Prioridad:
 
 1. Train/validation/test por paciente.
-2. Test externo si existe otra institucion.
-3. Cross-validation de 5 folds si el dataset es pequeno.
+2. Cross-validation de 5 folds con splits manuales por paciente si se usa nnU-Net.
+3. Test externo solo si aparece otra institucion o cohorte independiente.
 
 Restricciones:
 
 - El mismo paciente no debe aparecer en mas de un split.
 - Los contrastes del mismo paciente deben mantenerse en el mismo split.
 - Los splits deben conservar diversidad de contraste y patologia.
+- Para nnU-Net, todos los casos etiquetados de entrenamiento/validacion quedan en `imagesTr` y `labelsTr`; la separacion validacion se controla con splits manuales o con la cross-validation interna.
+- Si se define test holdout, guardar imagenes en `imagesTs` y conservar labels en un directorio/manifiesto separado para evaluacion propia, porque nnU-Net no usa `labelsTs` durante inferencia.
 
 ## Entrenamiento
 
@@ -274,37 +275,78 @@ case_id, segment, reference_volume_ml, predicted_volume_ml, absolute_error_ml, r
 
 ## Mapeo a una pipeline de datos existente
 
-Cuando el repositorio correcto este disponible, revisar estos puntos:
+En este repositorio, revisar estos puntos antes de entrenar:
 
-1. Donde define casos/dataset/manifiestos.
-2. Como representa imagenes 3D y mascaras.
-3. Si ya implementa resampling, clipping, normalization y crop.
-4. Si el split es por paciente o por archivo.
-5. Si soporta multiples modalidades/canales.
-6. Si las metricas actuales incluyen HD95, ASSD y volumetria.
-7. Si hay configuraciones por experimento.
-8. Si los resultados quedan trazables por contraste y segmento.
+1. Que la conversion DICOM a NIfTI preserve spacing, origen y orientacion.
+2. Que cada label tenga la misma geometria que su imagen.
+3. Que `dataset.json` use `channel_names: {"0": "MRI"}` y labels consecutivos.
+4. Que el manifiesto de casos conserve `patient_id`, `series_id`, `contrast_label` y `contrast_name`.
+5. Que los splits sean por paciente.
+6. Que las metricas exportadas incluyan contraste y, en Couinaud, segmento.
+7. Que HD95, ASSD y volumetria se calculen con spacing real.
+8. Que las mascaras Couinaud NIfTI se usen solo cuando exista correspondencia con la serie DICOM.
 
 ## Implementacion minima sugerida
 
-1. Agregar campos de metadatos MRI al manifiesto.
-2. Crear un dataset loader que devuelva `image`, `label`, `case_id`, `contrast` y `spacing`.
-3. Implementar transformaciones 3D reproducibles.
-4. Configurar experimento binario de higado completo.
-5. Configurar experimento multic clase Couinaud.
-6. Agregar evaluacion estratificada por contraste.
-7. Agregar script de volumetria usando spacing real.
-8. Exportar CSVs de metricas y predicciones.
+1. Crear referencia cruzada desde `SegmentationKey.csv` y `SequenceTypes.csv`.
+2. Generar dataset nnU-Net de higado completo desde DICOM hacia `imagesTr` y `labelsTr`.
+3. Generar splits por paciente y un manifiesto trazable.
+4. Implementar aumentacion 3D reproducible con rotacion y escalado.
+5. Configurar experimento binario de higado completo.
+6. Preparar Dataset002 Couinaud solo con las mascaras NIfTI disponibles.
+7. Agregar evaluacion estratificada por contraste.
+8. Agregar script de volumetria usando spacing real.
+9. Exportar CSVs de metricas y predicciones.
 
 ## Riesgos principales
 
 - Falta de labels Couinaud completos.
 - Ambiguedad inter-observador en planos Couinaud.
-- Dataset pequeno o desbalanceado por contraste.
+- Desbalance fuerte por contraste: C, E y O tienen muy pocos casos.
 - Fuga de datos si contrastes del mismo paciente se separan entre splits.
 - Volumetria incorrecta si se pierden metadatos de spacing.
 - Overfitting a un scanner, vendor o protocolo.
+- Posible desalineacion geometrica al combinar imagenes DICOM con mascaras Couinaud NIfTI.
+- Confundir la cobertura DICOM completa de higado con la cobertura parcial de Couinaud.
 
 ## Proxima accion necesaria
 
-El espacio de trabajo actual no contiene el repositorio mencionado. Para adaptar este protocolo a la pipeline real, hay que abrir o montar el repositorio correcto en esta conversacion. Una vez disponible, el siguiente paso es identificar el manifiesto/dataloader existente y proponer cambios concretos de codigo.
+Acciones de preparacion, sin entrenar:
+
+1. Ejecutar la referencia cruzada para auditar contrastes y cobertura.
+2. Revisar el manifiesto generado antes de convertir DICOM a NIfTI.
+3. Ejecutar la preparacion nnU-Net solo cuando se confirme el directorio de salida.
+4. Ejecutar la aumentacion solo sobre un dataset nnU-Net ya validado.
+5. Antes de entrenar, correr `nnUNetv2_plan_and_preprocess -d DATASET_ID --verify_dataset_integrity`.
+
+## Scripts agregados
+
+Referencia cruzada de contrastes:
+
+```bash
+python src/cross_reference_contrasts.py --output-dir data/reports
+```
+
+Preparacion nnU-Net para higado completo, sin escribir archivos:
+
+```bash
+python src/prepare_nnunet_dataset.py --task whole-liver --output-root nnUNet_raw --dry-run
+```
+
+Preparacion nnU-Net para el subconjunto Couinaud, sin escribir archivos:
+
+```bash
+python src/prepare_nnunet_dataset.py --task couinaud --output-root nnUNet_raw --dry-run
+```
+
+Aumentacion geometrica sobre un dataset nnU-Net ya preparado:
+
+```bash
+python src/augment_nnunet_dataset.py --dataset-dir nnUNet_raw/Dataset001_Liver --output-dir nnUNet_raw/Dataset101_LiverAug --dry-run
+```
+
+Exportacion de metricas nnU-Net al formato esperado del protocolo:
+
+```bash
+python src/export_nnunet_protocol_results.py --input models --output-file data/reports/nnunet_protocol_results.csv
+```
