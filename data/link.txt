@@ -1,3 +1,3 @@
-Drive para descargar datasets utilizados
+Link to download the datasets used in training the models, and also the models itself.
 
 https://drive.google.com/drive/folders/1iygn1OOBxoEanUiUc0stLdmIP1HmAvNX?usp=sharing
