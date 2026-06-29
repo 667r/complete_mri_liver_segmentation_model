@@ -7,12 +7,13 @@ if [[ $# -lt 2 ]]; then
 fi
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-export nnUNet_results="${nnUNet_results:-$REPO_ROOT/models/nnUNet_results_seg_8}"
+BASE="${BASE:-/mnt/researchers/julio-sotelo/datasets/mvarasr}"
+export nnUNet_results="${nnUNet_results:-$BASE/nnUNet_results}"
 
 INPUT_DIR="$1"
 OUTPUT_DIR="$2"
-DATASET_ID="${DATASET_ID:-2}"
+DATASET_ID="${DATASET_ID:-102}"
 CONFIGURATION="${CONFIGURATION:-3d_fullres}"
-TRAINER="${TRAINER:-nnUNetTrainer}"
+TRAINER="${TRAINER:-nnUNetTrainer_250epochs}"
 
 nnUNetv2_predict -i "$INPUT_DIR" -o "$OUTPUT_DIR" -d "$DATASET_ID" -c "$CONFIGURATION" -tr "$TRAINER"

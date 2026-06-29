@@ -21,16 +21,17 @@ log() {
 }
 
 PROJECT_DIR="${PROJECT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+BASE="${BASE:-/mnt/researchers/julio-sotelo/datasets/mvarasr}"
 DATASET_ID="${DATASET_ID:-102}"
 DATASET_NAME="${DATASET_NAME:-Dataset102_LiverSegmentsAug}"
 CONFIGURATION="${CONFIGURATION:-3d_fullres}"
-TRAINER="${TRAINER:-nnUNetTrainer}"
+TRAINER="${TRAINER:-nnUNetTrainer_250epochs}"
 PLANS="${PLANS:-nnUNetPlans}"
 TRAINER_CONFIG_DIR="${TRAINER_CONFIG_DIR:-${TRAINER}__${PLANS}__${CONFIGURATION}}"
 
-NNUNET_RAW="${NNUNET_RAW:-$PROJECT_DIR/nnUNet_raw}"
-NNUNET_PREPROCESSED="${NNUNET_PREPROCESSED:-$PROJECT_DIR/nnUNet_preprocessed}"
-NNUNET_RESULTS="${NNUNET_RESULTS:-$PROJECT_DIR/models/nnUNet_results_aug_seg_8}"
+NNUNET_RAW="${NNUNET_RAW:-$BASE/nnUNet_raw}"
+NNUNET_PREPROCESSED="${NNUNET_PREPROCESSED:-$BASE/nnUNet_preprocessed}"
+NNUNET_RESULTS="${NNUNET_RESULTS:-$BASE/nnUNet_results}"
 if [[ -z "${MODEL_DIR:-}" ]]; then
   MODEL_DIR="$NNUNET_RESULTS/$DATASET_NAME/$TRAINER_CONFIG_DIR"
   if [[ ! -d "$MODEL_DIR" ]]; then
@@ -48,12 +49,13 @@ fi
 IMAGES_DIR="${IMAGES_DIR:-$NNUNET_RAW/$DATASET_NAME/imagesTr}"
 LABELS_DIR="${LABELS_DIR:-$NNUNET_RAW/$DATASET_NAME/labelsTr}"
 RUN_ID="${RUN_ID:-$(date +%Y%m%d_%H%M%S)}"
-PREDICTIONS_DIR_NAME="${PREDICTIONS_DIR_NAME:-predictions_$RUN_ID}"
+PREDICTIONS_DIR_NAME="${PREDICTIONS_DIR_NAME:-predictions}"
 PREDICTIONS_DIR="${PREDICTIONS_DIR:-$NNUNET_RAW/$DATASET_NAME/$PREDICTIONS_DIR_NAME}"
 OUTPUT_DIR="${OUTPUT_DIR:-/mnt/workspace/$USER/aug_seg_8_finish_outputs/$RUN_ID}"
 
-EVAL_FOLDS="${EVAL_FOLDS:-${FOLDS:-0 3}}"
-PREDICT_FOLDS="${PREDICT_FOLDS:-${FOLDS:-0 3}}"
+FOLDS="${FOLDS:-auto}"
+EVAL_FOLDS="${EVAL_FOLDS:-$FOLDS}"
+PREDICT_FOLDS="${PREDICT_FOLDS:-$FOLDS}"
 PREDICT_CHECKPOINT="${PREDICT_CHECKPOINT:-checkpoint_final.pth}"
 
 RUN_EVALUATION="${RUN_EVALUATION:-1}"
@@ -75,6 +77,7 @@ export nnUNet_results="$NNUNET_RESULTS"
 mkdir -p "$OUTPUT_DIR"
 
 log "Project dir: $PROJECT_DIR"
+log "Server dataset base: $BASE"
 log "Dataset: $DATASET_NAME ($DATASET_ID)"
 log "Model dir: $MODEL_DIR"
 log "nnUNet_raw: $nnUNet_raw"
@@ -99,8 +102,37 @@ for path in "${required_paths[@]}"; do
   fi
 done
 
+if [[ "$EVAL_FOLDS" == "auto" || "$PREDICT_FOLDS" == "auto" ]]; then
+  completed_folds=()
+  shopt -s nullglob
+  for fold_dir in "$MODEL_DIR"/fold_*; do
+    fold_name="$(basename "$fold_dir")"
+    fold_number="${fold_name#fold_}"
+    if [[ -f "$fold_dir/$PREDICT_CHECKPOINT" ]]; then
+      completed_folds+=("$fold_number")
+    fi
+  done
+  shopt -u nullglob
+
+  if [[ "${#completed_folds[@]}" -eq 0 ]]; then
+    echo "ERROR: no completed folds with $PREDICT_CHECKPOINT were found in $MODEL_DIR" >&2
+    exit 1
+  fi
+
+  completed_folds_string="${completed_folds[*]}"
+  if [[ "$EVAL_FOLDS" == "auto" ]]; then
+    EVAL_FOLDS="$completed_folds_string"
+  fi
+  if [[ "$PREDICT_FOLDS" == "auto" ]]; then
+    PREDICT_FOLDS="$completed_folds_string"
+  fi
+fi
+
 read -r -a EVAL_FOLD_ARGS <<< "$EVAL_FOLDS"
 read -r -a PREDICT_FOLD_ARGS <<< "$PREDICT_FOLDS"
+
+log "Evaluation folds: ${EVAL_FOLD_ARGS[*]}"
+log "Prediction folds: ${PREDICT_FOLD_ARGS[*]}"
 
 missing_checkpoints=0
 for fold in "${EVAL_FOLD_ARGS[@]}"; do
@@ -151,7 +183,7 @@ if [[ "$RUN_EXPORT" == "1" ]]; then
   metrics_csv="$OUTPUT_DIR/nnunet_protocol_results_aug_seg_8.csv"
   log "Exporting protocol metrics to $metrics_csv"
   python3 "$PROJECT_DIR/src/export_nnunet_protocol_results.py" \
-    --input "$NNUNET_RESULTS" \
+    --input "$MODEL_DIR" \
     --output-file "$metrics_csv" \
     --segmentation-key "$PROJECT_DIR/data/SegmentationKey.csv" \
     --sequence-types "$PROJECT_DIR/data/SequenceTypes.csv" \
@@ -200,6 +232,7 @@ fi
 cat > "$OUTPUT_DIR/run_manifest.txt" <<EOF
 run_id=$RUN_ID
 project_dir=$PROJECT_DIR
+base=$BASE
 dataset_id=$DATASET_ID
 dataset_name=$DATASET_NAME
 model_dir=$MODEL_DIR

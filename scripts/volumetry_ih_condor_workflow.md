@@ -7,7 +7,7 @@ dataset folder under `nnUNet_raw`.
 
 ```bash
 ssh <user>@ih-condor
-cd /path/to/complete_mri_liver_segmentation_model
+cd /home/mvaras/complete_mri_liver_segmentation_model
 ```
 
 The Slurm wrapper calls the volumetry script inside the project:
@@ -26,7 +26,7 @@ Run only lightweight shell checks on the login node:
 ```bash
 for d in Dataset001_Liver Dataset101_LiverAug Dataset102_LiverSegmentsAug; do
   echo "$d"
-  find "nnUNet_raw/$d/predictions" -maxdepth 1 -name '*.nii*' 2>/dev/null | wc -l
+  find "/mnt/researchers/julio-sotelo/datasets/mvarasr/nnUNet_raw/$d/predictions" -maxdepth 1 -name '*.nii*' 2>/dev/null | wc -l
 done
 ```
 
@@ -57,7 +57,7 @@ CONDA_ENV=mariano sbatch scripts/run_volumetry_condor.sh
 Use a different dataset base:
 
 ```bash
-BASE=/path/to/dataset/base sbatch scripts/run_volumetry_condor.sh
+BASE=/mnt/researchers/julio-sotelo/datasets/mvarasr sbatch scripts/run_volumetry_condor.sh
 ```
 
 Use a different project path:

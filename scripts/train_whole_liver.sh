@@ -2,9 +2,10 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-export nnUNet_raw="${nnUNet_raw:-$REPO_ROOT/nnUNet_raw}"
-export nnUNet_preprocessed="${nnUNet_preprocessed:-$REPO_ROOT/nnUNet_preprocessed}"
-export nnUNet_results="${nnUNet_results:-$REPO_ROOT/models/nnUNet_results_seg}"
+BASE="${BASE:-/mnt/researchers/julio-sotelo/datasets/mvarasr}"
+export nnUNet_raw="${nnUNet_raw:-$BASE/nnUNet_raw}"
+export nnUNet_preprocessed="${nnUNet_preprocessed:-$BASE/nnUNet_preprocessed}"
+export nnUNet_results="${nnUNet_results:-$BASE/nnUNet_results}"
 
 DATASET_ID="${DATASET_ID:-1}"
 CONFIGURATION="${CONFIGURATION:-3d_fullres}"

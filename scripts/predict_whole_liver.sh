@@ -7,7 +7,8 @@ if [[ $# -lt 2 ]]; then
 fi
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-export nnUNet_results="${nnUNet_results:-$REPO_ROOT/models/nnUNet_results_seg}"
+BASE="${BASE:-/mnt/researchers/julio-sotelo/datasets/mvarasr}"
+export nnUNet_results="${nnUNet_results:-$BASE/nnUNet_results}"
 
 INPUT_DIR="$1"
 OUTPUT_DIR="$2"

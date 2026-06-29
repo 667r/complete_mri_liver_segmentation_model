@@ -11,15 +11,20 @@ model evaluation, prediction, and volumetry runs through `sbatch`.
 
 ```bash
 ssh <user>@ih-condor
-cd /path/to/complete_mri_liver_segmentation_model
+cd /home/mvaras/complete_mri_liver_segmentation_model
 ```
 
-The scripts default to paths relative to this project:
+The scripts default to the server layout used by the previous jobs:
 
 ```text
-nnUNet_raw:        $PROJECT_DIR/nnUNet_raw
-nnUNet_results:    $PROJECT_DIR/models/nnUNet_results_aug_seg_8
+project/code:      /home/mvaras/complete_mri_liver_segmentation_model
+dataset base:      /mnt/researchers/julio-sotelo/datasets/mvarasr
+nnUNet_raw:        /mnt/researchers/julio-sotelo/datasets/mvarasr/nnUNet_raw
+nnUNet_preprocessed:
+                   /mnt/researchers/julio-sotelo/datasets/mvarasr/nnUNet_preprocessed
+nnUNet_results:    /mnt/researchers/julio-sotelo/datasets/mvarasr/nnUNet_results
 dataset:           Dataset102_LiverSegmentsAug
+trainer:           nnUNetTrainer_250epochs
 ```
 
 If the model folder uses a custom trainer name, for example
@@ -61,11 +66,21 @@ Use a different conda environment:
 CONDA_ENV=mariano bash scripts/submit_aug_seg_8_finish_condor.sh
 ```
 
+Use a different dataset/model base:
+
+```bash
+BASE=/mnt/researchers/julio-sotelo/datasets/mvarasr \
+bash scripts/submit_aug_seg_8_finish_condor.sh
+```
+
 Run only specific folds:
 
 ```bash
-FOLDS="1 2" bash scripts/submit_aug_seg_8_finish_condor.sh
+FOLDS="3" bash scripts/submit_aug_seg_8_finish_condor.sh
 ```
+
+If `FOLDS` is not set, the job auto-detects folds that already have
+`checkpoint_final.pth`.
 
 Force a specific model folder if auto-detection is not enough:
 
@@ -103,5 +118,5 @@ run_manifest.txt
 Prediction masks are written inside:
 
 ```text
-nnUNet_raw/Dataset102_LiverSegmentsAug/predictions_<run_id>
+/mnt/researchers/julio-sotelo/datasets/mvarasr/nnUNet_raw/Dataset102_LiverSegmentsAug/predictions
 ```
