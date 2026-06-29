@@ -20,7 +20,7 @@ log() {
   echo "[$(timestamp)] $*"
 }
 
-PROJECT_DIR="${PROJECT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+PROJECT_DIR="${PROJECT_DIR:-${SLURM_SUBMIT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}}"
 BASE="${BASE:-/mnt/researchers/julio-sotelo/datasets/mvarasr}"
 DATASET_ID="${DATASET_ID:-102}"
 DATASET_NAME="${DATASET_NAME:-Dataset102_LiverSegmentsAug}"

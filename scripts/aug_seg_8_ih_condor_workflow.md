@@ -64,12 +64,14 @@ If training finished but nnU-Net failed with a missing `gt_segmentations`
 directory, submit a validation-only recovery job:
 
 ```bash
+cd /home/mvaras/complete_mri_liver_segmentation_model
 FOLD=3 sbatch scripts/validate_couinaud_fold_condor.sh
 ```
 
 If the checkpoint was not completed and training must continue:
 
 ```bash
+cd /home/mvaras/complete_mri_liver_segmentation_model
 FOLD=3 RESUME_TRAINING=1 sbatch scripts/validate_couinaud_fold_condor.sh
 ```
 
