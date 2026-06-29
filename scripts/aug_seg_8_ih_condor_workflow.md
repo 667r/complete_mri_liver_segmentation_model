@@ -58,7 +58,22 @@ bash scripts/submit_aug_seg_8_finish_condor.sh
 
 The job checks for `checkpoint_final.pth` before doing any heavy work.
 
-## 3. Common overrides
+## 3. Recover a fold that failed during final validation
+
+If training finished but nnU-Net failed with a missing `gt_segmentations`
+directory, submit a validation-only recovery job:
+
+```bash
+FOLD=3 sbatch scripts/validate_couinaud_fold_condor.sh
+```
+
+If the checkpoint was not completed and training must continue:
+
+```bash
+FOLD=3 RESUME_TRAINING=1 sbatch scripts/validate_couinaud_fold_condor.sh
+```
+
+## 4. Common overrides
 
 Use a different conda environment:
 
@@ -104,7 +119,7 @@ OUTPUT_DIR=/mnt/workspace/$USER/aug_seg_8_finish_outputs/manual_run \
 bash scripts/submit_aug_seg_8_finish_condor.sh
 ```
 
-## 4. Outputs
+## 5. Outputs
 
 Each run writes:
 

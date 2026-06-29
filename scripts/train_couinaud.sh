@@ -14,6 +14,11 @@ FOLDS="${FOLDS:-0 1 2 3 4}"
 
 nnUNetv2_plan_and_preprocess -d "$DATASET_ID" --verify_dataset_integrity
 
+DATASET_NAME="${DATASET_NAME:-Dataset102_LiverSegmentsAug}" \
+NNUNET_RAW="$nnUNet_raw" \
+NNUNET_PREPROCESSED="$nnUNet_preprocessed" \
+  bash "$REPO_ROOT/scripts/ensure_gt_segmentations.sh"
+
 for FOLD in $FOLDS; do
   nnUNetv2_train "$DATASET_ID" "$CONFIGURATION" "$FOLD" -tr "$TRAINER"
 done
