@@ -1,8 +1,5 @@
 """Prepare nnU-Net v2 datasets from the local liver MRI data.
 
-The script is intentionally not executed by the protocol. Use it when you are
-ready to convert data into an nnU-Net raw dataset.
-
 Examples:
     python src/prepare_nnunet_dataset.py --task whole-liver --output-root nnUNet_raw --dry-run
     python src/prepare_nnunet_dataset.py --task whole-liver --output-root nnUNet_raw --dataset-id 1 --dataset-name Liver
