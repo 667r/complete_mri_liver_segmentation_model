@@ -251,12 +251,8 @@ Volumes are computed in milliliters from the NIfTI voxel spacing.
 
 ## Results
 
-Store publication artifacts in `results/`:
-
-- `results/predictions/` for model outputs
-- `results/evaluation/` for metric tables
-- `results/figures/` for generated figures
-- `results/volumetry/` for volumetry CSV files
+Store publication artifacts in `results/` as csv files with data extracted from the `summary.json` files found in the
+validation folder of each fold.
 
 Do not commit patient-identifiable outputs or files restricted by data-use agreements.
 
