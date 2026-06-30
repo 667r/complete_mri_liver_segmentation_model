@@ -1,4 +1,4 @@
-"""Export nnU-Net validation summaries into the result tables expected by protocolo.md.
+"""Export nnU-Net validation summaries into the result csv tables.
 
 The script scans one results folder or one summary.json file. For every
 fold_*/validation/summary.json it writes fold-level, contrast-level and
