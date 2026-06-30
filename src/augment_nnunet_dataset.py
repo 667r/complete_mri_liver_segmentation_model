@@ -1,6 +1,6 @@
 """Create an augmented nnU-Net dataset with 3D rotations and scaling.
 
-This implements the geometric augmentation proposed in protocolo.md:
+This implements the geometric augmentation:
 small 3D rotations and isotropic scaling. It does not change intensities and
 does not overwrite the input dataset.
 
