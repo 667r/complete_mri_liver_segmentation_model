@@ -7,29 +7,34 @@ The project is organized for publication and review. Public dataset instructions
 ## Repository Structure
 
 ```text
-.
-├── src/
-│   └── compute_volumetry.py
-├── scripts/
-│   ├── train_whole_liver.sh
-│   ├── train_couinaud.sh
-│   ├── predict_whole_liver.sh
-│   ├── predict_couinaud.sh
-│   └── evaluate.sh
-├── data/
-│   ├── README.md
-│   ├── SegmentationKey.csv
-│   ├── SequenceTypes.csv
-│   └── link.txt
-├── models/
-│   └── README.md
-├── results/
-│   └── README.md
-├── requirements.txt
-└── README.md
+/home/mvarasr/complete_mri_liver_segmentation_model/
+|-- README.md
+|-- requirements.txt
+|-- src/
+|   |-- prepare_nnunet_dataset.py
+|   |-- augment_nnunet_dataset.py
+|   |-- export_nnunet_protocol_results.py
+|   |-- get_volumetry_mL.py
+|   `-- compute_volumetry.py
+|-- scripts/
+|   |-- train_couinaud.sh
+|   |-- predict_couinaud.sh
+|   |-- validate_couinaud_fold_condor.sh
+|   |-- run_aug_seg_8_finish_condor.sh
+|   |-- submit_aug_seg_8_finish_condor.sh
+|   `-- run_volumetry_condor.sh
+|-- data/
+|   |-- SegmentationKey.csv
+|   |-- SequenceTypes.csv
+|   `-- README.md
+|-- models/
+|   `-- README.md
+`-- results/
+    `-- README.md
 ```
 
-Expected local nnU-Net model layout:
+
+local nnU-Net model layout (not on the repository for file size issues):
 
 ```text
 models/
@@ -254,15 +259,14 @@ Volumes are computed in milliliters from the NIfTI voxel spacing.
 Store publication artifacts in `results/` as csv files with data extracted from the `summary.json` files found in the
 validation folder of each fold.
 
-Do not commit patient-identifiable outputs or files restricted by data-use agreements.
-
 ## Reproducibility Notes
 
 - Keep train/validation/test splits at the patient level.
 - Do not split different contrasts from the same patient across train and test.
 - Preserve NIfTI affine, orientation, and spacing metadata.
-- Record nnU-Net version, PyTorch version, CUDA version, GPU model, and random seeds.
-- Keep trained model folders intact when moving them into `models/`.
+- Record nnU-Net version, PyTorch version, CUDA version, GPU model, trainer,
+  folds, and random seeds.
+- Keep trained model folders intact after training.
 
 ## References
 
